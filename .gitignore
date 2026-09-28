@@ -1,0 +1,11 @@
+build/
+generated/
+*.o
+*.obj
+*.dll
+*.so
+*.dylib
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
