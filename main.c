@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include <SDL3/SDL.h>
 
@@ -62,7 +63,7 @@ int main(int argc, char **argv)
     SDL_Texture *texture = NULL;
     SDL_Event event;
 
-    const double target_frame = 1.0 / 60.0;
+    const uint64_t target_ns = SDL_NS_PER_SECOND / 60;
 
     if (!SDL_Init(SDL_INIT_VIDEO))
     {
@@ -70,7 +71,7 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
-    window = SDL_CreateWindow("C Pixel Graphics", WIDTH * 4, HEIGHT * 4, 0);
+    window = SDL_CreateWindow("C Pixel Graphics", WIDTH * 4, HEIGHT * 4, SDL_WINDOW_RESIZABLE);
 
     if (window == NULL)
     {
@@ -89,6 +90,8 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    SDL_SetRenderLogicalPresentation(renderer, WIDTH, HEIGHT, SDL_LOGICAL_PRESENTATION_LETTERBOX);
+
     texture = SDL_CreateTexture(renderer,
                                 SDL_PIXELFORMAT_XRGB8888,
                                 SDL_TEXTUREACCESS_STREAMING,
@@ -106,18 +109,30 @@ int main(int argc, char **argv)
 
     SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
 
-    uint8_t isRunning = 1;
+    bool isRunning = true;
     uint32_t frame = 0;
 
     while (isRunning)
     {
-        uint64_t start = SDL_GetPerformanceCounter();
+        uint64_t start = SDL_GetTicksNS();
 
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_EVENT_QUIT)
             {
-                isRunning = 0;
+                isRunning = false;
+            }
+            else if (event.type == SDL_EVENT_KEY_DOWN && !event.key.repeat)
+            {
+                if (event.key.key == SDLK_F11)
+                {
+                    bool isFullscreen = (SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN) != 0;
+
+                    if (!SDL_SetWindowFullscreen(window, !isFullscreen))
+                    {
+                        fprintf(stderr, "Fullscreen toggle failed: %s\n", SDL_GetError());
+                    }
+                }
             }
         }
 
@@ -128,13 +143,13 @@ int main(int argc, char **argv)
         SDL_RenderTexture(renderer, texture, NULL, NULL);
         SDL_RenderPresent(renderer);
 
-        uint64_t end = SDL_GetPerformanceCounter();
+        uint64_t end = SDL_GetTicksNS();
 
-        double elapsed = (double)(end - start) / (double)SDL_GetPerformanceFrequency();
+        uint64_t elapsed = end - start;
 
-        if (elapsed < target_frame)
+        if (elapsed < target_ns)
         {
-            SDL_Delay((uint32_t)((target_frame - elapsed) * 1000.0));
+            SDL_DelayPrecise(target_ns - elapsed);
         }
 
         frame++;
