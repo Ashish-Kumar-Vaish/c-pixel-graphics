@@ -80,6 +80,14 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    SDL_Surface *icon = SDL_LoadBMP("assets/icon.bmp");
+
+    if (icon != NULL)
+    {
+        SDL_SetWindowIcon(window, icon);
+        SDL_DestroySurface(icon);
+    }
+
     renderer = SDL_CreateRenderer(window, NULL);
 
     if (renderer == NULL)
