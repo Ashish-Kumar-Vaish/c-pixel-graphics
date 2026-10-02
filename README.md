@@ -53,7 +53,7 @@ CMake re-scans `effects/` automatically when a file is added or removed (confirm
 
 ## Effects included
 
-`plasma`, `starfield`.
+`plasma`, `starfield`, `doomfire`.
 
 ## Limits, deliberately
 
